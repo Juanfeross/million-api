@@ -1,0 +1,88 @@
+##############
+# ENVIRONMENT
+##############
+.env
+.env.*
+!.env.example
+
+##############
+# DOTNET
+##############
+# Build results
+bin/
+obj/
+out/
+artifacts/
+
+# Cache and temp
+*.cache
+*.tmp
+*.temp
+*.bak
+
+# Compiled DLLs & PDBs
+*.dll
+*.pdb
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+
+##############
+# ASP.NET
+##############
+# User secrets
+secrets.json
+
+# Logs
+*.log
+logs/
+
+##############
+# IDE FILES
+##############
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# VSCode
+.vscode/
+
+# Rider / IntelliJ
+.idea/
+*.DotSettings
+
+##############
+# OS FILES
+##############
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Linux
+*~
+
+##############
+# MISC FILES
+##############
+# Certificates
+*.cer
+*.pfx
+
+# Publish Profiles
+Properties/PublishProfiles/
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml

@@ -1,0 +1,35 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# JSON, YAML, TS suelen usar 2 espacios
+[*.json]
+indent_size = 2
+
+[*.yml]
+indent_size = 2
+
+[*.yaml]
+indent_size = 2
+
+[*.ts]
+indent_size = 2
+
+[*.tsx]
+indent_size = 2
+
+# C# formatting rules
+[*.cs]
+indent_size = 4
+dotnet_sort_system_directives_first = true
+csharp_new_line_before_open_brace = all
+csharp_indent_switch_labels = true
+csharp_indent_switch_case_contents = true
+csharp_style_var_for_locals = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+csharp_style_prefer_simplified_interpolation = true:suggestion
