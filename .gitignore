@@ -86,3 +86,19 @@ Properties/PublishProfiles/
 coverage/
 *.coverage
 *.coveragexml
+TestResults/
+
+# MongoDB
+*.lock
+data/
+*.mongodb
+
+# Test Files
+*.testsettings
+*.trx
+*.vsmdi
+
+# Local configuration files
+appsettings.Local.json
+appsettings.*.Local.json
+*.local.json
