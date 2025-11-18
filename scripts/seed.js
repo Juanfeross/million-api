@@ -24,6 +24,7 @@
   const lastNames = ["Pérez","García","López","Martínez","Rodríguez","Hernández","González","Sánchez","Ramírez","Torres","Flores","Rivera","Gómez","Díaz","Vargas","Cruz"];
   const streets = ["Av. Principal","Calle Secundaria","Boulevard Central","Av. Costera","Calle de las Flores","Av. del Sol","Calle 5","Calle 20","Av. Reforma","Av. Libertad","Calle Palma","Av. Insurgentes"];
   const cities = ["Ciudad de México","Guadalajara","Monterrey","Cancún","Tijuana","Puebla","León","Querétaro","Mérida","Toluca"];
+  const propertyImageCategories = ["house", "building", "apartment", "interior", "home", "architecture", "real-estate", "property"];
   const traceConcepts = [
     "Compra inicial",
     "Remodelación mayor",
@@ -62,7 +63,7 @@
       IdOwner: `OWNER${pad(i, 4)}`,
       Name: `${fn} ${ln}`,
       Address: `${randomChoice(streets)} ${randomInt(1, 999)}, ${randomChoice(cities)}`,
-      Photo: `https://picsum.photos/seed/owner${i}/200/200`,
+      Photo: `https://loremflickr.com/200/200/person?random=${i}`,
       Birthday: new Date(1970 + randomInt(0, 35), randomInt(0, 11), randomInt(1, 28))
     });
   }
@@ -109,7 +110,7 @@
       imageDocs.push({
         IdPropertyImage: `IMGSPEC${pad(i, 5)}`,
         IdProperty: specialPropId,
-        file: `https://picsum.photos/seed/special${i}/1200/800`,
+        file: `https://loremflickr.com/1200/800/${randomChoice(propertyImageCategories)}?random=${i}`,
         Enabled: true
       });
     }
@@ -119,7 +120,7 @@
       imageDocs.push({
         IdPropertyImage: `IMG${pad(i, 6)}`,
         IdProperty: propId.str || propId.toString(),
-        file: `https://picsum.photos/seed/property${i}/800/600`,
+        file: `https://loremflickr.com/800/600/${randomChoice(propertyImageCategories)}?random=${i}`,
         Enabled: Math.random() < 0.8
       });
     }

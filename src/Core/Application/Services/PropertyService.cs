@@ -252,166 +252,105 @@ public class PropertyService : IPropertyService
 
     private async Task<Dictionary<string, Owner>> GetOwnersCachedAsync(IEnumerable<string> ownerIds)
     {
-        var ownerIdList = ownerIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
-        if (!ownerIdList.Any())
-        {
-            return new Dictionary<string, Owner>();
-        }
-
-        var result = new Dictionary<string, Owner>();
-        var missingIds = new List<string>();
-
-        foreach (var ownerId in ownerIdList)
-        {
-            var cacheKey = $"owner_{ownerId}";
-            if (_cache.TryGetValue(cacheKey, out Owner? cachedOwner) && cachedOwner != null)
-            {
-                result[ownerId] = cachedOwner;
-            }
-            else
-            {
-                missingIds.Add(ownerId);
-            }
-        }
-
-        if (missingIds.Any())
-        {
-            var loadedOwners = await _ownerRepository.GetOwnersByIdsAsync(missingIds);
-
-            foreach (var owner in loadedOwners.Values)
-            {
-                foreach (var ownerId in missingIds)
-                {
-                    if (owner.Id == ownerId || owner.IdOwner == ownerId)
-                    {
-                        var cacheKey = $"owner_{ownerId}";
-                        _cache.Set(cacheKey, owner, CacheExpiration);
-                        if (!result.ContainsKey(ownerId))
-                        {
-                            result[ownerId] = owner;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        return result;
+        return await GetCachedAsync(
+            ownerIds,
+            id => $"owner_{id}",
+            async missingIds => await _ownerRepository.GetOwnersByIdsAsync(missingIds),
+            (owner, ownerId) => owner.Id == ownerId || owner.IdOwner == ownerId
+        );
     }
 
     private async Task<Dictionary<string, PropertyImage>> GetFirstImagesCachedAsync(IEnumerable<string> propertyIds)
     {
-        var propertyIdList = propertyIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
-        if (!propertyIdList.Any())
-        {
-            return new Dictionary<string, PropertyImage>();
-        }
-
-        var result = new Dictionary<string, PropertyImage>();
-        var missingIds = new List<string>();
-
-        foreach (var propertyId in propertyIdList)
-        {
-            var cacheKey = $"image_first_{propertyId}";
-            if (_cache.TryGetValue(cacheKey, out PropertyImage? cachedImage) && cachedImage != null)
-            {
-                result[propertyId] = cachedImage;
-            }
-            else
-            {
-                missingIds.Add(propertyId);
-            }
-        }
-
-        if (missingIds.Any())
-        {
-            var loadedImages = await _propertyImageRepository.GetFirstEnabledImagesByPropertyIdsAsync(missingIds);
-
-            foreach (var kvp in loadedImages)
-            {
-                var cacheKey = $"image_first_{kvp.Key}";
-                _cache.Set(cacheKey, kvp.Value, CacheExpiration);
-                result[kvp.Key] = kvp.Value;
-            }
-        }
-
-        return result;
+        return await GetCachedAsync(
+            propertyIds,
+            id => $"image_first_{id}",
+            async missingIds => await _propertyImageRepository.GetFirstEnabledImagesByPropertyIdsAsync(missingIds)
+        );
     }
 
     private async Task<Dictionary<string, List<PropertyImage>>> GetEnabledImagesCachedAsync(IEnumerable<string> propertyIds)
     {
-        var propertyIdList = propertyIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
-        if (!propertyIdList.Any())
-        {
-            return new Dictionary<string, List<PropertyImage>>();
-        }
-
-        var result = new Dictionary<string, List<PropertyImage>>();
-        var missingIds = new List<string>();
-
-        foreach (var propertyId in propertyIdList)
-        {
-            var cacheKey = $"images_all_{propertyId}";
-            if (_cache.TryGetValue(cacheKey, out List<PropertyImage>? cachedImages) && cachedImages != null)
-            {
-                result[propertyId] = cachedImages;
-            }
-            else
-            {
-                missingIds.Add(propertyId);
-            }
-        }
-
-        if (missingIds.Any())
-        {
-            var loadedImages = await _propertyImageRepository.GetEnabledImagesByPropertyIdsAsync(missingIds);
-
-            foreach (var kvp in loadedImages)
-            {
-                var cacheKey = $"images_all_{kvp.Key}";
-                _cache.Set(cacheKey, kvp.Value, CacheExpiration);
-                result[kvp.Key] = kvp.Value;
-            }
-        }
-
-        return result;
+        return await GetCachedAsync(
+            propertyIds,
+            id => $"images_all_{id}",
+            async missingIds => await _propertyImageRepository.GetEnabledImagesByPropertyIdsAsync(missingIds)
+        );
     }
 
     private async Task<Dictionary<string, List<PropertyTrace>>> GetTracesCachedAsync(IEnumerable<string> propertyIds)
     {
-        var propertyIdList = propertyIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
-        if (!propertyIdList.Any())
+        return await GetCachedAsync(
+            propertyIds,
+            id => $"traces_{id}",
+            async missingIds => await _propertyTraceRepository.GetTracesByPropertyIdsAsync(missingIds)
+        );
+    }
+
+    private async Task<Dictionary<string, TValue>> GetCachedAsync<TValue>(
+        IEnumerable<string> ids,
+        Func<string, string> cacheKeyBuilder,
+        Func<List<string>, Task<Dictionary<string, TValue>>> loadFunction)
+    {
+        return await GetCachedAsync(ids, cacheKeyBuilder, loadFunction, null);
+    }
+
+    private async Task<Dictionary<string, TValue>> GetCachedAsync<TValue>(
+        IEnumerable<string> ids,
+        Func<string, string> cacheKeyBuilder,
+        Func<List<string>, Task<Dictionary<string, TValue>>> loadFunction,
+        Func<TValue, string, bool>? matchFunction)
+    {
+        var idList = ids.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
+        if (!idList.Any())
         {
-            return new Dictionary<string, List<PropertyTrace>>();
+            return new Dictionary<string, TValue>();
         }
 
-        var result = new Dictionary<string, List<PropertyTrace>>();
+        var result = new Dictionary<string, TValue>();
         var missingIds = new List<string>();
 
-        foreach (var propertyId in propertyIdList)
+        foreach (var id in idList)
         {
-            var cacheKey = $"traces_{propertyId}";
-            if (_cache.TryGetValue(cacheKey, out List<PropertyTrace>? cachedTraces) && cachedTraces != null)
+            var cacheKey = cacheKeyBuilder(id);
+            if (_cache.TryGetValue(cacheKey, out TValue? cachedValue) && cachedValue != null)
             {
-                result[propertyId] = cachedTraces;
+                result[id] = cachedValue;
             }
             else
             {
-                missingIds.Add(propertyId);
+                missingIds.Add(id);
             }
         }
 
         if (missingIds.Any())
         {
-            var loadedTraces = await _propertyTraceRepository.GetTracesByPropertyIdsAsync(missingIds);
+            var loadedItems = await loadFunction(missingIds);
 
-            foreach (var kvp in loadedTraces)
+            foreach (var kvp in loadedItems)
             {
-                var cacheKey = $"traces_{kvp.Key}";
+                var cacheKey = cacheKeyBuilder(kvp.Key);
                 _cache.Set(cacheKey, kvp.Value, CacheExpiration);
-                if (!result.ContainsKey(kvp.Key))
+                result[kvp.Key] = kvp.Value;
+            }
+
+            if (matchFunction != null)
+            {
+                foreach (var item in loadedItems.Values)
                 {
-                    result[kvp.Key] = kvp.Value;
+                    foreach (var missingId in missingIds)
+                    {
+                        if (matchFunction(item, missingId))
+                        {
+                            var cacheKey = cacheKeyBuilder(missingId);
+                            if (!result.ContainsKey(missingId))
+                            {
+                                _cache.Set(cacheKey, item, CacheExpiration);
+                                result[missingId] = item;
+                            }
+                            break;
+                        }
+                    }
                 }
             }
         }

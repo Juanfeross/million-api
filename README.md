@@ -91,7 +91,7 @@ API REST desarrollada en .NET 9.0 para la gestión de propiedades inmobiliarias.
 
 Por defecto, la aplicación se ejecuta en el puerto **5158**. Para cambiar el puerto:
 
-1. Editar `Properties/launchSettings.json`
+1. Editar `src/Properties/launchSettings.json`
 2. O usar la variable de entorno `ASPNETCORE_URLS`
 
 ## 📖 Uso
@@ -135,26 +135,33 @@ El proyecto sigue los principios de **Clean Architecture** con las siguientes ca
 
 ```
 millionback/
-├── Core/
-│   ├── Domain/           # Entidades y interfaces del dominio
-│   │   ├── Entities/     # Entidades de negocio
-│   │   └── Interfaces/   # Contratos de repositorios
-│   └── Application/      # Lógica de aplicación
-│       ├── DTOs/         # Objetos de transferencia de datos
-│       ├── Interfaces/   # Contratos de servicios
-│       ├── Mappings/     # Configuración de AutoMapper
-│       ├── Services/     # Servicios de aplicación
-│       └── Validators/   # Validadores de FluentValidation
-├── Infrastructure/       # Implementaciones de infraestructura
-│   └── Data/
-│       └── MongoDB/      # Implementación de MongoDB
-│           ├── Context/  # Contexto de base de datos
-│           └── Repositories/ # Implementación de repositorios
-└── API/                  # Capa de presentación
-    ├── Controllers/      # Controladores REST
-    ├── Filters/         # Filtros de acción
-    ├── Middleware/       # Middleware personalizado
-    └── Models/          # Modelos de respuesta
+├── src/                  # Código fuente del proyecto
+│   ├── Core/
+│   │   ├── Domain/           # Entidades y interfaces del dominio
+│   │   │   ├── Entities/     # Entidades de negocio
+│   │   │   └── Interfaces/   # Contratos de repositorios
+│   │   └── Application/      # Lógica de aplicación
+│   │       ├── DTOs/         # Objetos de transferencia de datos
+│   │       ├── Interfaces/   # Contratos de servicios
+│   │       ├── Mappings/     # Configuración de AutoMapper
+│   │       ├── Services/     # Servicios de aplicación
+│   │       └── Validators/   # Validadores de FluentValidation
+│   ├── Infrastructure/       # Implementaciones de infraestructura
+│   │   └── Data/
+│   │       └── MongoDB/      # Implementación de MongoDB
+│   │           ├── Context/  # Contexto de base de datos
+│   │           └── Repositories/ # Implementación de repositorios
+│   ├── API/                  # Capa de presentación
+│   │   ├── Controllers/      # Controladores REST
+│   │   ├── Filters/         # Filtros de acción
+│   │   ├── Middleware/       # Middleware personalizado
+│   │   └── Models/          # Modelos de respuesta
+│   ├── Properties/           # Configuración de lanzamiento
+│   ├── Program.cs           # Punto de entrada de la aplicación
+│   └── appsettings*.json    # Archivos de configuración
+├── scripts/                 # Scripts de utilidad (seeding, etc.)
+├── Tests/                    # Tests unitarios e integración
+└── millionback.csproj       # Archivo de proyecto .NET
 ```
 
 ## 🔌 Endpoints
