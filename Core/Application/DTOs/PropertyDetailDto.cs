@@ -49,5 +49,10 @@ public class PropertyDetailDto
     /// Información del propietario
     /// </summary>
     public OwnerDto? Owner { get; set; }
+
+    /// <summary>
+    /// Historial de trazas de la propiedad (ordenado por fecha descendente)
+    /// </summary>
+    public List<PropertyTraceDto> Traces { get; set; } = new();
 }
 

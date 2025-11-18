@@ -1,0 +1,14 @@
+
+{
+  "name": "millionback-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scripts utilitarios para el backend MillionBack",
+  "scripts": {
+    "seed": "powershell -ExecutionPolicy Bypass -File ./scripts/seed.ps1",
+    "seed:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/seed.ps1 -Reset",
+    "seed:custom": "powershell -ExecutionPolicy Bypass -File ./scripts/seed.ps1 -Owners $env:npm_config_owners -Props $env:npm_config_props -Images $env:npm_config_images -Traces $env:npm_config_traces",
+    "seed:stress": "powershell -ExecutionPolicy Bypass -File ./scripts/seed.ps1 -Reset -Owners 800 -Props 5000 -Images 10000 -Traces 6",
+    "seed:unique": "powershell -ExecutionPolicy Bypass -File ./scripts/seed.ps1 -Reset -SingleMode -Owners 1 -Props 1 -Images 1 -Traces 4 -SinglePropertyName \"Propiedad Demo Única\" -SinglePropertyPrice 9876543 -SinglePropertyImages 80"
+  }
+}

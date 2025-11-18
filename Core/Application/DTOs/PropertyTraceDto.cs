@@ -1,24 +1,13 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-
-namespace Core.Domain.Entities;
+namespace Core.Application.DTOs;
 
 /// <summary>
-/// Entidad que representa el historial de ventas de una propiedad
+/// DTO para representar el historial de ventas de una propiedad
 /// </summary>
-public class PropertyTrace
+public class PropertyTraceDto
 {
-    /// <summary>
-    /// Identificador único de MongoDB
-    /// </summary>
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string Id { get; set; } = string.Empty;
-
     /// <summary>
     /// Identificador único del registro de trazabilidad
     /// </summary>
-    [BsonElement("IdPropertyTrace")]
     public string IdPropertyTrace { get; set; } = string.Empty;
 
     /// <summary>
@@ -40,11 +29,5 @@ public class PropertyTrace
     /// Impuesto de la venta
     /// </summary>
     public decimal Tax { get; set; }
-
-    /// <summary>
-    /// Identificador de la propiedad
-    /// </summary>
-    [BsonElement("IdProperty")]
-    public string IdProperty { get; set; } = string.Empty;
 }
 

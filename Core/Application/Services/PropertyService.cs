@@ -15,6 +15,7 @@ public class PropertyService : IPropertyService
     private readonly IPropertyRepository _propertyRepository;
     private readonly IOwnerRepository _ownerRepository;
     private readonly IPropertyImageRepository _propertyImageRepository;
+    private readonly IPropertyTraceRepository _propertyTraceRepository;
     private readonly IMapper _mapper;
     private readonly IMemoryCache _cache;
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(10);
@@ -26,12 +27,14 @@ public class PropertyService : IPropertyService
         IPropertyRepository propertyRepository,
         IOwnerRepository ownerRepository,
         IPropertyImageRepository propertyImageRepository,
+        IPropertyTraceRepository propertyTraceRepository,
         IMapper mapper,
         IMemoryCache cache)
     {
         _propertyRepository = propertyRepository;
         _ownerRepository = ownerRepository;
         _propertyImageRepository = propertyImageRepository;
+        _propertyTraceRepository = propertyTraceRepository;
         _mapper = mapper;
         _cache = cache;
     }
@@ -101,7 +104,7 @@ public class PropertyService : IPropertyService
 
     public async Task<PagedResult<PropertyDto>> SearchPropertiesPagedAsync(PropertyFilterDto filter, int page, int pageSize)
     {
-        var filterKey = $"name_{filter.Name}_addr_{filter.Address}_min_{filter.MinPrice}_max_{filter.MaxPrice}";
+        var filterKey = $"name_{filter.Name ?? "null"}_addr_{filter.Address ?? "null"}_min_{filter.MinPrice?.ToString() ?? "null"}_max_{filter.MaxPrice?.ToString() ?? "null"}";
         var cacheKey = $"search_{filterKey}_page_{page}_size_{pageSize}";
 
         if (_cache.TryGetValue(cacheKey, out PagedResult<PropertyDto>? cachedResult) && cachedResult != null)
@@ -119,7 +122,10 @@ public class PropertyService : IPropertyService
             PageSize = pageSize
         };
 
-        _cache.Set(cacheKey, result, TimeSpan.FromMinutes(5));
+        if (result.Items.Any())
+        {
+            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(5));
+        }
 
         return result;
     }
@@ -202,11 +208,13 @@ public class PropertyService : IPropertyService
 
         var ownersTask = GetOwnersCachedAsync(ownerIds);
         var imagesTask = GetEnabledImagesCachedAsync(propertyIds);
+        var tracesTask = GetTracesCachedAsync(propertyIds);
 
-        await Task.WhenAll(ownersTask, imagesTask);
+        await Task.WhenAll(ownersTask, imagesTask, tracesTask);
 
         var ownersDict = await ownersTask;
         var imagesDict = await imagesTask;
+        var tracesDict = await tracesTask;
 
         if (!string.IsNullOrEmpty(property.IdOwner) && ownersDict.TryGetValue(property.IdOwner, out var owner))
         {
@@ -224,6 +232,19 @@ public class PropertyService : IPropertyService
         else
         {
             dto.Images = new List<string>();
+        }
+
+        if (tracesDict.TryGetValue(property.Id, out var traces))
+        {
+            dto.Traces = traces.Select(t => _mapper.Map<PropertyTraceDto>(t)).ToList();
+        }
+        else if (!string.IsNullOrEmpty(property.IdProperty) && tracesDict.TryGetValue(property.IdProperty, out var tracesByPropertyId))
+        {
+            dto.Traces = tracesByPropertyId.Select(t => _mapper.Map<PropertyTraceDto>(t)).ToList();
+        }
+        else
+        {
+            dto.Traces = new List<PropertyTraceDto>();
         }
 
         return dto;
@@ -350,6 +371,48 @@ public class PropertyService : IPropertyService
                 var cacheKey = $"images_all_{kvp.Key}";
                 _cache.Set(cacheKey, kvp.Value, CacheExpiration);
                 result[kvp.Key] = kvp.Value;
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<Dictionary<string, List<PropertyTrace>>> GetTracesCachedAsync(IEnumerable<string> propertyIds)
+    {
+        var propertyIdList = propertyIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
+        if (!propertyIdList.Any())
+        {
+            return new Dictionary<string, List<PropertyTrace>>();
+        }
+
+        var result = new Dictionary<string, List<PropertyTrace>>();
+        var missingIds = new List<string>();
+
+        foreach (var propertyId in propertyIdList)
+        {
+            var cacheKey = $"traces_{propertyId}";
+            if (_cache.TryGetValue(cacheKey, out List<PropertyTrace>? cachedTraces) && cachedTraces != null)
+            {
+                result[propertyId] = cachedTraces;
+            }
+            else
+            {
+                missingIds.Add(propertyId);
+            }
+        }
+
+        if (missingIds.Any())
+        {
+            var loadedTraces = await _propertyTraceRepository.GetTracesByPropertyIdsAsync(missingIds);
+
+            foreach (var kvp in loadedTraces)
+            {
+                var cacheKey = $"traces_{kvp.Key}";
+                _cache.Set(cacheKey, kvp.Value, CacheExpiration);
+                if (!result.ContainsKey(kvp.Key))
+                {
+                    result[kvp.Key] = kvp.Value;
+                }
             }
         }
 

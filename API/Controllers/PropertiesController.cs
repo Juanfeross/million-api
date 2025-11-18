@@ -32,11 +32,24 @@ public class PropertiesController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene una página de propiedades
+    /// Obtiene una página paginada de todas las propiedades disponibles
     /// </summary>
-    /// <param name="page">Número de página (>=1)</param>
-    /// <param name="pageSize">Tamaño de página (1-100)</param>
-    /// <returns>Página de propiedades</returns>
+    /// <param name="page">Número de página (mínimo 1, por defecto 1)</param>
+    /// <param name="pageSize">Cantidad de elementos por página (mínimo 1, máximo 100, por defecto 20)</param>
+    /// <returns>Respuesta con la página de propiedades solicitada, incluyendo información de paginación</returns>
+    /// <response code="200">Retorna la página de propiedades exitosamente</response>
+    /// <response code="500">Error interno del servidor</response>
+    /// <remarks>
+    /// Este endpoint devuelve una lista paginada de propiedades. Cada propiedad incluye:
+    /// - Información básica (nombre, dirección, precio)
+    /// - Imagen principal
+    /// - Nombre del propietario
+    ///
+    /// Ejemplo de uso:
+    /// ```
+    /// GET /api/properties?page=1&amp;pageSize=20
+    /// ```
+    /// </remarks>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<PropertyDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
@@ -60,10 +73,25 @@ public class PropertiesController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene una propiedad por su identificador
+    /// Obtiene los detalles completos de una propiedad específica por su identificador
     /// </summary>
-    /// <param name="id">Identificador de la propiedad</param>
-    /// <returns>Detalles de la propiedad</returns>
+    /// <param name="id">Identificador único de la propiedad (ObjectId de MongoDB)</param>
+    /// <returns>Detalles completos de la propiedad incluyendo todas las imágenes y información del propietario</returns>
+    /// <response code="200">Retorna los detalles de la propiedad exitosamente</response>
+    /// <response code="404">La propiedad no fue encontrada</response>
+    /// <response code="500">Error interno del servidor</response>
+    /// <remarks>
+    /// Este endpoint devuelve información detallada de una propiedad, incluyendo:
+    /// - Todos los datos de la propiedad
+    /// - Lista completa de imágenes habilitadas
+    /// - Información completa del propietario
+    /// - Historial de trazas (PropertyTraces) ordenado por fecha
+    ///
+    /// Ejemplo de uso:
+    /// ```
+    /// GET /api/properties/507f1f77bcf86cd799439011
+    /// ```
+    /// </remarks>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<PropertyDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -88,15 +116,28 @@ public class PropertiesController : ControllerBase
     }
 
     /// <summary>
-    /// Busca propiedades según los filtros proporcionados
+    /// Busca propiedades aplicando filtros opcionales y devuelve resultados paginados
     /// </summary>
-    /// <param name="name">Nombre de la propiedad (opcional)</param>
-    /// <param name="address">Dirección de la propiedad (opcional)</param>
-    /// <param name="minPrice">Precio mínimo (opcional)</param>
-    /// <param name="maxPrice">Precio máximo (opcional)</param>
-    /// <param name="page">Número de página (>=1)</param>
-    /// <param name="pageSize">Tamaño de página (1-100)</param>
-    /// <returns>Página de propiedades filtradas</returns>
+    /// <param name="name">Búsqueda parcial por nombre de la propiedad (case-insensitive)</param>
+    /// <param name="address">Búsqueda parcial por dirección de la propiedad (case-insensitive)</param>
+    /// <param name="minPrice">Precio mínimo de la propiedad (decimal)</param>
+    /// <param name="maxPrice">Precio máximo de la propiedad (decimal)</param>
+    /// <param name="page">Número de página (mínimo 1, por defecto 1)</param>
+    /// <param name="pageSize">Cantidad de elementos por página (mínimo 1, máximo 100, por defecto 20)</param>
+    /// <returns>Respuesta con la página de propiedades que coinciden con los filtros</returns>
+    /// <response code="200">Retorna la página de propiedades filtradas exitosamente</response>
+    /// <response code="400">Error en los parámetros de búsqueda</response>
+    /// <response code="500">Error interno del servidor</response>
+    /// <remarks>
+    /// Permite buscar propiedades usando uno o más filtros. Todos los filtros son opcionales y se combinan con AND.
+    ///
+    /// Ejemplos de uso:
+    /// ```
+    /// GET /api/properties/search?name=casa&amp;minPrice=100000&amp;maxPrice=500000
+    /// GET /api/properties/search?address=Madrid&amp;page=1&amp;pageSize=10
+    /// GET /api/properties/search?minPrice=200000
+    /// ```
+    /// </remarks>
     [HttpGet("search")]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<PropertyDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -132,32 +173,5 @@ public class PropertiesController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Obtiene la imagen principal de una propiedad
-    /// </summary>
-    /// <param name="id">Identificador de la propiedad</param>
-    /// <returns>URL o ruta de la imagen</returns>
-    [HttpGet("{id}/image")]
-    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<string>>> GetPropertyImage(string id)
-    {
-        try
-        {
-            var image = await _propertyService.GetPropertyImageAsync(id);
-            if (string.IsNullOrEmpty(image))
-            {
-                return NotFound(ApiResponse<object>.ErrorResponse("Imagen no encontrada"));
-            }
-
-            return Ok(ApiResponse<string>.SuccessResponse(image, "Imagen obtenida exitosamente"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al obtener la imagen de la propiedad {PropertyId}", id);
-            return StatusCode(500, ApiResponse<object>.ErrorResponse("Error al obtener la imagen", new List<string> { ex.Message }));
-        }
-    }
 }
 

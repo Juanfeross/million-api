@@ -11,11 +11,12 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using API.Middleware;
 using API.Filters;
+using Microsoft.OpenApi.Models;
+
+// Load .env file BEFORE creating the builder so ASPNETCORE_URLS is read correctly
+Env.TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Load .env file (if exists)
-Env.TraversePath().Load();
 
 // Read environment variables
 var mongoConn = Environment.GetEnvironmentVariable("MONGO_CONN");
@@ -44,6 +45,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IOwnerRepository, OwnerRepository>();
 builder.Services.AddScoped<Core.Domain.Interfaces.IPropertyImageRepository, PropertyImageRepository>();
+builder.Services.AddScoped<Core.Domain.Interfaces.IPropertyTraceRepository, PropertyTraceRepository>();
 
 // Add Application Services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
@@ -63,7 +65,34 @@ builder.Services.AddControllers(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "MillionBack API",
+        Version = "v1",
+        Description = "API REST para gestión de propiedades inmobiliarias. Proporciona endpoints para consultar, buscar y obtener detalles de propiedades, incluyendo información de propietarios e imágenes.",
+        Contact = new OpenApiContact
+        {
+            Name = "MillionBack Team",
+            Email = "support@millionback.com"
+        },
+        License = new OpenApiLicense
+        {
+            Name = "MIT License",
+            Url = new Uri("https://opensource.org/licenses/MIT")
+        }
+    });
+
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
+
+    c.UseInlineDefinitionsForEnums();
+});
 
 // CORS
 builder.Services.AddCors(options =>
@@ -81,7 +110,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "MillionBack API v1");
-        c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+        c.RoutePrefix = string.Empty;
+        c.DocumentTitle = "MillionBack API Documentation";
+        c.DefaultModelsExpandDepth(-1);
+        c.DisplayRequestDuration();
+        c.EnableDeepLinking();
+        c.EnableFilter();
+        c.ShowExtensions();
     });
 }
 

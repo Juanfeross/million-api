@@ -41,6 +41,14 @@ public class PropertyProfile : Profile
             .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
             .ForMember(dest => dest.Photo, opt => opt.MapFrom(src => src.Photo))
             .ForMember(dest => dest.Birthday, opt => opt.MapFrom(src => src.Birthday));
+
+        // PropertyTrace -> PropertyTraceDto
+        CreateMap<PropertyTrace, PropertyTraceDto>()
+            .ForMember(dest => dest.IdPropertyTrace, opt => opt.MapFrom(src => src.IdPropertyTrace))
+            .ForMember(dest => dest.DateSale, opt => opt.MapFrom(src => src.DateSale))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+            .ForMember(dest => dest.Value, opt => opt.MapFrom(src => src.Value))
+            .ForMember(dest => dest.Tax, opt => opt.MapFrom(src => src.Tax));
     }
 }
 
