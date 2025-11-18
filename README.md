@@ -1,6 +1,8 @@
 # 🏠 MillionBack API
 
-API REST desarrollada en .NET 9.0 para la gestión de propiedades inmobiliarias. Proporciona endpoints para consultar, buscar y obtener detalles de propiedades, incluyendo información de propietarios e imágenes.
+> **Prueba Técnica** - API REST desarrollada en .NET 9.0 para la gestión de propiedades inmobiliarias. Proporciona endpoints para consultar, buscar y obtener detalles de propiedades, incluyendo información de propietarios e imágenes.
+>
+> **Desarrollado por:** Juan Fernando Álvarez Gallego
 
 ## 📋 Tabla de Contenidos
 
@@ -15,6 +17,7 @@ API REST desarrollada en .NET 9.0 para la gestión de propiedades inmobiliarias.
 - [Endpoints](#-endpoints)
 - [Optimizaciones de Rendimiento](#-optimizaciones-de-rendimiento)
 - [Scripts Útiles](#-scripts-útiles)
+- [Testing](#-testing)
 
 ## ✨ Características
 
@@ -244,33 +247,35 @@ GET /api/properties/search?name=casa&minPrice=100000&maxPrice=500000&page=1&page
 
 ## ⚡ Optimizaciones de Rendimiento
 
-El proyecto incluye varias optimizaciones implementadas:
+El proyecto incluye múltiples optimizaciones implementadas que mejoran significativamente el rendimiento:
 
-### 1. Batch Loading
-- Carga múltiples owners e imágenes en una sola query
-- Reducción de ~160 queries a ~3 queries por petición
+### Resumen de Mejoras
 
-### 2. Proyección MongoDB
-- Solo se traen los campos necesarios desde la base de datos
-- Reducción de transferencia de datos en ~30-40%
+- ✅ **Batch Loading:** Reducción de ~160 queries a ~3-4 queries (97.5% menos)
+- ✅ **Proyección MongoDB:** Solo campos necesarios (~30-50% menos datos)
+- ✅ **Ejecución en Paralelo:** Queries simultáneas con `Task.WhenAll()`
+- ✅ **Caché en Memoria:** TTL de 5-10 minutos para datos frecuentes
+- ✅ **Índices Optimizados:** Índices estratégicos en todas las colecciones
+- ✅ **Optimización de Count:** `EstimatedDocumentCountAsync` para conteos sin filtro
 
-### 3. Ejecución en Paralelo
-- Queries de count y find se ejecutan en paralelo
-- Reducción de tiempo total en ~30-50%
+### Métricas de Rendimiento
 
-### 4. Caché en Memoria
-- Caché de owners e imágenes (TTL: 10 minutos)
-- Caché de páginas completas (TTL: 5 minutos)
-- Reducción de tiempo de respuesta en ~50-75% para datos cacheados
+| Escenario | Antes | Después | Mejora |
+|-----------|-------|---------|--------|
+| Listar 20 propiedades | 6000ms | 800ms | **87% más rápido** |
+| Con caché | 6000ms | 200-400ms | **93-97% más rápido** |
+| Queries por petición | ~160 | ~3-4 | **97.5% menos** |
 
-### 5. Índices MongoDB
-- Índices optimizados para búsquedas frecuentes
-- Índices compuestos para queries complejas
+### Documentación Completa
 
-**Rendimiento esperado:**
-- Primera petición: ~800ms
-- Peticiones cacheadas: ~200-400ms
-- Misma página repetida: <50ms
+Para información detallada sobre todas las optimizaciones implementadas, consulta el archivo [`OPTIMIZATIONS.md`](./OPTIMIZATIONS.md) que incluye:
+
+- Descripción técnica de cada optimización
+- Código de implementación
+- Métricas detalladas antes/después
+- Arquitectura de caché y batch loading
+- Mejores prácticas aplicadas
+- Próximas optimizaciones posibles
 
 ## 🛠 Scripts Útiles
 
@@ -372,7 +377,112 @@ Todos los errores se registran y devuelven en formato estándar.
 
 ## 🧪 Testing
 
-Para probar la API:
+### Testing Unitario
+
+El proyecto incluye una suite completa de tests unitarios desarrollada con **NUnit**, **Moq** y **FluentAssertions**.
+
+#### Estructura de Tests
+
+```
+Tests/
+└── UnitTests/
+    ├── Controllers/
+    │   └── PropertiesControllerTests.cs      # Tests de endpoints
+    ├── Services/
+    │   ├── PropertyServiceTests.cs            # Tests básicos del servicio
+    │   └── PropertyServiceAdditionalTests.cs # Tests de caché, mapeo y errores
+    ├── Validators/
+    │   └── PropertyFilterDtoValidatorTests.cs # Tests de validación
+    └── Middleware/
+        └── ExceptionHandlerMiddlewareTests.cs # Tests de manejo de excepciones
+```
+
+#### Ejecutar Tests
+
+```bash
+# Ejecutar todos los tests
+dotnet test Tests/UnitTests/MillionBack.Tests.csproj
+
+# Con más detalles
+dotnet test Tests/UnitTests/MillionBack.Tests.csproj --verbosity normal
+
+# Ejecutar un test específico
+dotnet test Tests/UnitTests/MillionBack.Tests.csproj --filter "FullyQualifiedName~PropertyServiceTests"
+
+# Generar reporte de cobertura
+dotnet test Tests/UnitTests/MillionBack.Tests.csproj --collect:"XPlat Code Coverage"
+```
+
+#### Cobertura de Tests
+
+El proyecto cuenta con **38 tests unitarios** que cubren:
+
+- ✅ **Controllers** (9 tests): Todos los endpoints del `PropertiesController`
+  - Tests de casos exitosos
+  - Tests de manejo de errores
+  - Tests de validación de parámetros
+
+- ✅ **Services** (13 tests): Lógica de negocio en `PropertyService`
+  - Tests de obtención de propiedades
+  - Tests de búsqueda y filtrado
+  - Tests de caché en memoria
+  - Tests de mapeo de datos (Owner, Images, Traces)
+  - Tests de manejo de excepciones
+
+- ✅ **Validators** (7 tests): Validación de `PropertyFilterDto`
+  - Tests de precios negativos
+  - Tests de rangos de precios
+  - Tests de casos válidos e inválidos
+
+- ✅ **Middleware** (8 tests): Manejo de excepciones
+  - Tests de diferentes tipos de excepciones
+  - Tests de códigos de estado HTTP
+  - Tests de logging
+
+#### Tecnologías de Testing
+
+- **NUnit** (v4.2.2): Framework de testing
+- **Moq** (v4.20.72): Framework para mocking y stubs
+- **FluentAssertions** (v8.8.0): Biblioteca para assertions más legibles
+- **Microsoft.NET.Test.Sdk** (v17.12.0): SDK de testing de .NET
+- **coverlet.collector** (v6.0.2): Para cobertura de código
+
+#### Ejemplo de Test
+
+```csharp
+[Test]
+public async Task GetPropertyById_WhenPropertyExists_ReturnsOkWithPropertyDetail()
+{
+    // Arrange
+    var propertyId = "507f1f77bcf86cd799439011";
+    var propertyDetail = new PropertyDetailDto { Name = "Casa de Prueba" };
+
+    _propertyServiceMock
+        .Setup(x => x.GetPropertyByIdAsync(propertyId))
+        .ReturnsAsync(propertyDetail);
+
+    // Act
+    var result = await _controller.GetPropertyById(propertyId);
+
+    // Assert
+    result.Result.Should().BeOfType<OkObjectResult>();
+    var okResult = result.Result as OkObjectResult;
+    okResult!.StatusCode.Should().Be(200);
+}
+```
+
+#### Documentación Completa
+
+Para más información sobre testing, consulta el archivo [`TESTING_GUIDE.md`](./TESTING_GUIDE.md) que incluye:
+- Guía detallada de uso de NUnit
+- Ejemplos de mocking con Moq
+- Mejores prácticas
+- Debugging de tests
+- Generación de reportes de cobertura
+
+### Testing de API
+
+Para probar la API manualmente:
 
 1. **Swagger UI**: Usar la interfaz interactiva en `http://localhost:5158`
 2. **Postman**: Importar la colección (ver `POSTMAN_GUIDE.md`)
@@ -382,15 +492,21 @@ Para probar la API:
 
 Este proyecto está bajo la Licencia MIT.
 
-## 👥 Contribuidores
+## 👤 Autor
 
-- MillionBack Team
+**Juan Fernando Álvarez Gallego**
 
-## 📞 Soporte
+Este proyecto fue desarrollado como parte de una prueba técnica, implementando una API REST completa con arquitectura limpia, optimizaciones de rendimiento y una suite exhaustiva de tests unitarios.
 
-Para soporte, contactar a: support@millionback.com
+## 📞 Contacto
+
+- **Email:** alvarezjfernandog@gmail.com
+- **Teléfono:** +57 302 285 60 79
+- **GitHub:** [Juanfeross](https://github.com/Juanfeross)
+- **LinkedIn:** [Juan Fernando Álvarez Gallego](https://www.linkedin.com/in/juan-fernando-%C3%A1lvarez-gallego-b97b31212/)
 
 ---
 
-**Desarrollado con ❤️ usando .NET 9.0 y MongoDB**
+**Prueba Técnica** - Desarrollado por **Juan Fernando Álvarez Gallego**
+**Tecnologías:** .NET 9.0, MongoDB, Clean Architecture, NUnit
 

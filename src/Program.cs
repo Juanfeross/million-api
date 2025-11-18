@@ -74,8 +74,8 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API REST para gestión de propiedades inmobiliarias. Proporciona endpoints para consultar, buscar y obtener detalles de propiedades, incluyendo información de propietarios e imágenes.",
         Contact = new OpenApiContact
         {
-            Name = "MillionBack Team",
-            Email = "support@millionback.com"
+            Name = "Juan Fernando Álvarez Gallego",
+            Email = "alvarezjfernandog@gmail.com"
         },
         License = new OpenApiLicense
         {
