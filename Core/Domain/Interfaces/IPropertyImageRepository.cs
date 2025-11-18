@@ -21,5 +21,15 @@ public interface IPropertyImageRepository
     /// Obtiene todas las imágenes habilitadas de una propiedad
     /// </summary>
     Task<IEnumerable<PropertyImage>> GetEnabledImagesByPropertyIdAsync(string propertyId);
+
+    /// <summary>
+    /// Obtiene la primera imagen habilitada de múltiples propiedades (batch loading)
+    /// </summary>
+    Task<Dictionary<string, PropertyImage>> GetFirstEnabledImagesByPropertyIdsAsync(IEnumerable<string> propertyIds);
+
+    /// <summary>
+    /// Obtiene todas las imágenes habilitadas de múltiples propiedades (batch loading)
+    /// </summary>
+    Task<Dictionary<string, List<PropertyImage>>> GetEnabledImagesByPropertyIdsAsync(IEnumerable<string> propertyIds);
 }
 

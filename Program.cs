@@ -37,6 +37,9 @@ builder.Services.Configure<DatabaseSettings>(options =>
 // Add MongoDB Context
 builder.Services.AddSingleton<MongoDbContext>();
 
+// Add Memory Cache
+builder.Services.AddMemoryCache();
+
 // Add Repositories
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IOwnerRepository, OwnerRepository>();

@@ -11,5 +11,10 @@ public interface IOwnerRepository : IRepository<Owner>
     /// Busca propietarios por nombre
     /// </summary>
     Task<IEnumerable<Owner>> FindByNameAsync(string name);
+
+    /// <summary>
+    /// Obtiene múltiples propietarios por sus IDs (batch loading)
+    /// </summary>
+    Task<Dictionary<string, Owner>> GetOwnersByIdsAsync(IEnumerable<string> ownerIds);
 }
 
